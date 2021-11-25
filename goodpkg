@@ -130,7 +130,7 @@ function getSandboxFileContents() {
   const home = process.env.HOME;
 
   const configDir = process.env.XDG_CONFIG_HOME || path.join(home, ".config");
-  const cacheDir = process.env.XDG_CACHE_HOME || path.join(home, ".config");
+  const cacheDir = process.env.XDG_CACHE_HOME || path.join(home, ".cache");
 
   const yarnGlobalDir = path.join(home, ".yarn");
   const yarnCacheDir = path.join(cacheDir, "yarn");
