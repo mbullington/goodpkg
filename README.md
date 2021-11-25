@@ -2,7 +2,7 @@
 
 > `goodpkg` is **alpha** quality and should be treated as such! There's currently no unit tests to ensure sandbox functionality.
 >
-> Although it's probably still better than nothing.
+> Although it's probably still better than nothing and I've tried manually testing each rule.
 
 ## What is this
 
@@ -24,6 +24,23 @@ The mechanism is also not super well documented outside of Apple internally, so 
  * https://reverse.put.as/wp-content/uploads/2011/09/Apple-Sandbox-Guide-v1.0.pdf
  * https://github.com/bazelbuild/bazel/blob/b5bbe28ce207375009babc142fd3e8ce915d3dc9/src/main/java/com/google/devtools/build/lib/sandbox/DarwinSandboxedSpawnRunner.java#L328
  * https://jmmv.dev/2019/11/macos-sandbox-exec.html
+
+## What can goodpkg restrict?
+
+- Disable extraneous system interfaces.
+- Restrict file reads to:
+  * `/Users`
+  * Home directory (and subdirectories) besides `~/Documents`, `~/Downloads`, etc. unless the Node project is in any of those directories.
+  * `/usr/local` and subdirectories.
+  * XCode Command Line Tools.
+- Restrict file writes to:
+  * Working directory and subdirectories.
+  * NPM/Yarn caches.
+  * NPM/Yarn config directories.
+  * Temporary files.
+  * `/dev/null`
+- Restrict network to ports `:80` and `:443`
+- Restrict ENV variables to this list: https://github.com/mbullington/goodpkg/blob/main/goodpkg#L6
 
 ## How can I use it?
 
