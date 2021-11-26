@@ -61,6 +61,8 @@ The mechanism is also not super well documented outside of Apple internally, so 
 - https://jmmv.dev/2019/11/macos-sandbox-exec.html
 - Debugging resources: https://wiki.mozilla.org/Sandbox/Mac/Debugging
 
+It's also useful to debug blocked resources through searching "sandbox" in `Console.app`.
+
 ## What can goodpkg restrict?
 
 - Disable extraneous system interfaces.
@@ -74,7 +76,7 @@ The mechanism is also not super well documented outside of Apple internally, so 
   - NPM/Yarn caches.
   - NPM/Yarn config directories.
   - Temporary files.
-  - `/dev/null`
+  - `/dev/null`, `/dev/urandom`
 - Restrict network to ports `:22`, `:80`, `:443`
 - Restrict ENV variables to this list: https://github.com/mbullington/goodpkg/blob/main/goodpkg#L6
 
