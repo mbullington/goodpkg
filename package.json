@@ -1,0 +1,14 @@
+{
+  "name": "goodpkg",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:mbullington/goodpkg.git",
+  "author": "Michael Bullington <michael@bullington.xyz>",
+  "license": "MIT",
+  "bin": {
+    "goodpkg": "./goodpkg.js"
+  },
+  "engines": {
+    "node": ">=4.0.0"
+  }
+}

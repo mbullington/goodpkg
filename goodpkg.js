@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 // Edit this part to change how goodpkg runs.
 const OPTIONS = {
   network: true,
@@ -122,6 +120,7 @@ if (
  * https://reverse.put.as/wp-content/uploads/2011/09/Apple-Sandbox-Guide-v1.0.pdf
  * https://github.com/bazelbuild/bazel/blob/b5bbe28ce207375009babc142fd3e8ce915d3dc9/src/main/java/com/google/devtools/build/lib/sandbox/DarwinSandboxedSpawnRunner.java#L328
  * https://jmmv.dev/2019/11/macos-sandbox-exec.html
+ * https://wiki.mozilla.org/Sandbox/Mac/Debugging
  *
  * NOTE: In Apple's sandbox configuration language, the *last* matching rule wins.
  */
@@ -158,6 +157,7 @@ function getSandboxFileContents() {
 (version 1)
 
 (deny default)
+
 (import "/System/Library/Sandbox/Profiles/bsd.sb")
 
 (allow process-fork)
@@ -169,9 +169,6 @@ function getSandboxFileContents() {
       .map((p) => `(subpath "${p}")`)
       .join("\n")}
 
-    ;; Allow grepping users, for some reason ESBuild uses this?
-    (literal "/Users")
-
     ;; Allow reading home directory.
     (subpath "${process.env.HOME}")
 
@@ -179,8 +176,14 @@ function getSandboxFileContents() {
     (subpath "/usr/local")
 
     ;; XCode paths for node-gyp and node-pre-gyp
+    (subpath "/System/Libraries")
     (subpath "/Applications/Xcode.app")
-    (subpath "/Library/Developer/CommandLineTools")
+    (subpath "/Library/Developer")
+
+    ;; FIX: xcodebuild uses this. https://www.mulle-kybernetik.com/weblog/2015/xcodebuild_driving_me_nuts_ag.html
+    (literal "/Library/Preferences/com.apple.dt.Xcode.plist")
+    ;; FIX: ESBuild uses this?
+    (literal "/Users")
 )
 
 (deny file-read*
@@ -237,6 +240,8 @@ console.log("⚠️ ⚠️ ⚠️  Otherwise you're not using goodpkg");
 setTimeout(() => {
   const sandboxFilePath = getSandboxFilePath();
   const sandboxFile = getSandboxFileContents();
+
+  console.log(sandboxFilePath);
 
   fs.writeFileSync(sandboxFilePath, sandboxFile);
 
