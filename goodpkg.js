@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 // Edit this part to change how goodpkg runs.
 const OPTIONS = {
   network: true,
