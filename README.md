@@ -1,14 +1,18 @@
 # goodpkg
 
-> `goodpkg` is **alpha** quality and should be treated as such! There's currently no unit tests to ensure sandbox functionality.
+> `goodpkg` is **beta** quality and should be treated as such!
 >
-> Although it's probably still better than nothing and I've tried manually testing each rule.
+> There's currently some unit tests to ensure sandbox functionality, and
+> I've tried it on complex projects with ESBuild and node-gyp. It still may
+> not work on all projects (yet).
+>
+> If `goodpkg` doesn't work for you, please open an issue on [GitHub](https://github.com/mbullington/goodpkg/issues) or directly contribute!
 
 `goodpkg` is a proof-of-concept CLI to run NPM/Yarn in a macOS sandbox environment, a similar mechanism to the Mac App Store.
 
 ## How can I use it?
 
-> Once it's beyond alpha quality it would be great to publish this directly on NPM.
+> Once it's beyond beta quality it would be great to publish this directly on NPM.
 
 `yarn global add https://github.com/mbullington/goodpkg.git`
 
@@ -71,7 +75,7 @@ The mechanism is also not super well documented outside of Apple internally, so 
   - NPM/Yarn config directories.
   - Temporary files.
   - `/dev/null`
-- Restrict network to ports `:80` and `:443`
+- Restrict network to ports `:22`, `:80`, `:443`
 - Restrict ENV variables to this list: https://github.com/mbullington/goodpkg/blob/main/goodpkg#L6
 
 ## License

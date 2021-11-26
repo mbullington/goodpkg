@@ -8,7 +8,20 @@
   "bin": {
     "goodpkg": "./goodpkg.js"
   },
+  "scripts": {
+    "test": "node scripts/test_with_sandbox.js"
+  },
   "engines": {
     "node": ">=4.0.0"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.0.3",
+    "jest": "^27.3.1"
+  },
+  "jest": {
+    "rootDir": ".",
+    "testMatch": [
+      "<rootDir>/test/**/*.(spec|test).{ts,tsx,js,jsx}"
+    ]
   }
 }
