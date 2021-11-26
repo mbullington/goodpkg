@@ -65,7 +65,7 @@ describe("sandbox", () => {
 
     expect(() => {
       fs.readFileSync(
-        path.join(HOME, "Library/Preferences/com.apple.finder.plist")
+        path.join(HOME, "Library/Caches/com.apple.accountsd/Cache.db")
       );
     }).toThrow();
 

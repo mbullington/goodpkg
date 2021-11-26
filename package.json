@@ -23,5 +23,8 @@
     "testMatch": [
       "<rootDir>/test/**/*.(spec|test).{ts,tsx,js,jsx}"
     ]
+  },
+  "dependencies": {
+    "command-exists": "^1.2.9"
   }
 }
