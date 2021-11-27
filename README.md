@@ -77,7 +77,7 @@ It's also useful to debug blocked resources through searching "sandbox" in `Cons
   - NPM/Yarn config directories.
   - Temporary files.
   - `/dev/null`, `/dev/urandom`
-- Restrict network to ports `:22`, `:80`, `:443`
+- Restrict network to ports `:80`, `:443`
 - Restrict ENV variables to this list: https://github.com/mbullington/goodpkg/blob/main/goodpkg#L6
 
 ## License

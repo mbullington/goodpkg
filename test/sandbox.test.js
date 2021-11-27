@@ -8,7 +8,7 @@ describe("sandbox", () => {
 
   test("blocks readdir", () => {
     expect(() => {
-      fs.readdirSync("/etc");
+      fs.readdirSync("/var");
     }).toThrow();
 
     expect(() => {
@@ -56,17 +56,13 @@ describe("sandbox", () => {
 
   test("blocks readFile", () => {
     expect(() => {
-      fs.readFileSync("/etc/aliases");
-    }).toThrow();
-
-    expect(() => {
-      fs.readFileSync("/etc/zprofile");
-    }).toThrow();
-
-    expect(() => {
       fs.readFileSync(
         path.join(HOME, "Library/Caches/com.apple.accountsd/Cache.db")
       );
+    }).toThrow();
+
+    expect(() => {
+      fs.readFileSync(path.join(HOME, ".ssh/id_ed25519"));
     }).toThrow();
 
     expect(() => {
@@ -94,7 +90,7 @@ describe("sandbox", () => {
     }).toThrow();
   });
 
-  test("blocks network to non-443 non-80 non-22 ports", async () => {
+  test("blocks network to non-443 non-80 ports", async () => {
     const promise = new Promise((resolve, reject) => {
       const req = http.get("http://github.com:8080");
       req.on("error", (err) => {
