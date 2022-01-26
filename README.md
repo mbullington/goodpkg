@@ -56,11 +56,11 @@ The mechanism is also not super well documented outside of Apple internally, so 
 
 **Reading on Apple Sandboxing:**
 
+- https://chromium.googlesource.com/chromium/src/+/master/sandbox/mac/seatbelt_sandbox_design.md
 - https://reverse.put.as/wp-content/uploads/2011/09/Apple-Sandbox-Guide-v1.0.pdf
 - https://github.com/bazelbuild/bazel/blob/b5bbe28ce207375009babc142fd3e8ce915d3dc9/src/main/java/com/google/devtools/build/lib/sandbox/DarwinSandboxedSpawnRunner.java#L328
 - https://jmmv.dev/2019/11/macos-sandbox-exec.html
-- https://chromium.googlesource.com/chromium/src/+/master/sandbox/mac/seatbelt_sandbox_design.md
-- Debugging resources: https://wiki.mozilla.org/Sandbox/Mac/Debugging
+- https://iphonedev.wiki/index.php/Seatbelt
 
 It's also useful to debug blocked resources through searching "sandbox" in `Console.app`.
 
