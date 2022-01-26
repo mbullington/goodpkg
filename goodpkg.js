@@ -1,22 +1,10 @@
 #!/usr/bin/env node
 
-// Edit this part to change how goodpkg runs.
-const OPTIONS = {
-  network: true,
-  allowEnv: [
-    "PWD",
-    "PATH",
-    "HOME",
-    "TMPDIR",
-    "XDG_CONFIG_HOME",
-    "XDG_CACHE_HOME",
-    "TERM",
-  ],
-};
-
 const fs = require("fs");
 
 const runCommand = require("./lib/run_command");
+
+const getConfig = require("./lib/get_config");
 const getSandboxFilePath = require("./lib/get_sandbox_file_path");
 const getSandboxFileContents = require("./lib/get_sandbox_file_contents");
 
@@ -67,6 +55,7 @@ function pick(obj, keys) {
   }, {});
 }
 
+const config = getConfig();
 const isYarn = argv[0] === "yarn";
 const isNPM = argv[0] === "npm";
 
@@ -95,12 +84,12 @@ console.log("⚠️ ⚠️ ⚠️  Otherwise you're not using goodpkg");
 
 setTimeout(() => {
   const sandboxFilePath = getSandboxFilePath();
-  const sandboxFile = getSandboxFileContents();
+  const sandboxFile = getSandboxFileContents(config);
 
   fs.writeFileSync(sandboxFilePath, sandboxFile);
 
   runCommand(
     `sandbox-exec -f ${sandboxFilePath} ${argv.join(" ")}`,
-    pick(process.env, OPTIONS.allowEnv)
+    pick(process.env, config.allowEnv)
   );
 }, 2500);

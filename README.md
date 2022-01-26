@@ -52,18 +52,39 @@ A little known feature of macOS is `sandboxd` (related to [App Sandbox](https://
 
 `sandbox-exec` is _technically_ deprecated (via `man sandbox-exec`) but used throughout the macOS system, even on Apple Silicon, so it's unlikely to be removed soon.
 
-The mechanism is also not super well documented outside of Apple internally, so my understanding of it relies heavily on the profiles in `/System/Libraries/Sandbox/Profiles`, third-party guides, and the implementation of `DarwinSandboxedSpawnRunner` in Bazel.
+The mechanism is also not super well documented outside of Apple internally, so my understanding of it relies heavily on the profiles in `/System/Libraries/Sandbox/Profiles`, third-party guides from Mozilla and Chromium, and the implementation of `DarwinSandboxedSpawnRunner` in Bazel.
 
 **Reading on Apple Sandboxing:**
 
 - https://reverse.put.as/wp-content/uploads/2011/09/Apple-Sandbox-Guide-v1.0.pdf
 - https://github.com/bazelbuild/bazel/blob/b5bbe28ce207375009babc142fd3e8ce915d3dc9/src/main/java/com/google/devtools/build/lib/sandbox/DarwinSandboxedSpawnRunner.java#L328
 - https://jmmv.dev/2019/11/macos-sandbox-exec.html
+- https://chromium.googlesource.com/chromium/src/+/master/sandbox/mac/seatbelt_sandbox_design.md
 - Debugging resources: https://wiki.mozilla.org/Sandbox/Mac/Debugging
 
 It's also useful to debug blocked resources through searching "sandbox" in `Console.app`.
 
 ## What can goodpkg restrict?
+
+Default configuration (located at `~/.config/goodpkg/config.js`):
+
+```typescript
+// Edit this to change how goodpkg runs.
+module.exports = {
+  // Environment variables to pass to the sandboxed process.
+  allowEnv: [
+    "PWD",
+    "PATH",
+    "HOME",
+    "TMPDIR",
+    "XDG_CONFIG_HOME",
+    "XDG_CACHE_HOME",
+    "TERM",
+  ],
+  // This is disabled by default to prevent malicious behavior.
+  writeYarnrc: false,
+};
+```
 
 - Disable extraneous system interfaces.
 - Restrict file reads to:
@@ -78,7 +99,6 @@ It's also useful to debug blocked resources through searching "sandbox" in `Cons
   - Temporary files.
   - `/dev/null`, `/dev/urandom`
 - Restrict network to ports `:80`, `:443`
-- Restrict ENV variables to this list: https://github.com/mbullington/goodpkg/blob/main/goodpkg#L6
 
 ## License
 
