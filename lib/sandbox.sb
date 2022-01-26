@@ -1,0 +1,157 @@
+(version 1)
+(import "/System/Library/Sandbox/Profiles/bsd.sb")
+
+;; CONSTANTS
+
+;; These work in Chromium?
+;; Decided to just regex (param home), etc... from within the script.
+
+;; (define home "HOME")
+;; (define working_dir "WORKING_DIR")
+;; (define homebrew_dir "HOMEBREW_DIR")
+;; (define npm_global_dir "NPM_GLOBAL_DIR")
+;; (define xdg_config_home "XDG_CONFIG_HOME")
+;; (define xdg_cache_home "XDG_CACHE_HOME")
+;; (define write_yarnrc "WRITE_YARNRC")
+
+(define (from-home subpath)
+  (string-append (param home) subpath))
+(define (from-xdg-config-home subpath)
+  (string-append (param xdg_config_home) subpath))
+(define (from-xdg-cache-home subpath)
+  (string-append (param xdg_cache_home) subpath))
+
+; Helper function to check if a param is set to true.
+(define (true? str) (string=? str "TRUE"))
+
+;; PROCESSES
+
+; Allow sending signals to self - https://crbug.com/20370
+(allow signal (target self))
+
+;; FIXME: tighten this up
+(allow process-fork)
+(allow process-exec)
+(allow lsopen)
+
+;; FILE READ
+;; There's a decent amount of defaults from bsd.sb and system.sb.
+
+(allow file-read*
+    ;; I couldn't come up with a way around this.
+    PATH_HACK
+
+    ;; Homebrew is just too difficult to track and is owned by the user.
+    (subpath (param homebrew_dir))
+    ;; Same deal with MacPorts, although I've never used it.
+    (subpath "/opt/local")
+    ;; Global packages from npm.
+    (subpath (param npm_global_dir))
+
+    ;; SIP paths.
+    (subpath "/System")
+    (subpath "/usr")
+
+    ;; XCode paths for node-gyp and node-pre-gyp.
+    (subpath "/Applications/Xcode.app")
+    (subpath "/Library")
+)
+
+(allow file-read*
+    ;; Some apps try and do this to read the package.json.
+    (literal "/")
+    (literal "/Users")
+    (literal (param home))
+)
+
+(deny file-read*
+    (literal "/var")
+    (subpath "/var")
+
+    (subpath "/Library/Caches")
+    (subpath "/Library/Keychains")
+)
+
+(allow file-read*
+    ;; Paths inside the inaccessible paths we'd then... want to access.
+    (subpath (from-home "/Library/Preferences"))
+    (subpath (from-home "/Library/Developer"))
+
+    (subpath (from-home "/.yarnrc"))
+)
+
+;; FILE WRITE
+
+(deny file-write*)
+(allow file-read* file-write*
+    ;; Working directory.
+    (subpath (param working_dir))
+
+    ;; Default yarn places.
+    (subpath (from-home "/.yarn"))
+    (subpath (from-xdg-cache-home "/yarn"))
+    (subpath (param xdg_config_home))
+
+    (if (true? (param write_yarnrc))
+        (subpath (from-home "/.yarnrc"))
+        ;; This is already specified above but apaprently I need to add something.
+        (subpath (param working_dir))
+    )
+
+    ;; Default NPM places.
+    (subpath (from-home "/.npm"))
+    
+    ;; Temp files.
+    (subpath "/private/var/folders/")
+
+    ;; node-gyp
+    (subpath (from-home "/.node-gyp"))
+    (subpath (from-home "/Library/Caches/node-gyp"))
+)
+
+;; NETWORK
+;; This part was copied—and lightly modified—from Chromium.
+
+(deny network*)
+
+; DNS configuration watcher entries. This is a nesty mess of symlinks.
+(allow file-read*
+  (path "/")
+  (path "/etc")
+  (path "/etc/hosts")
+  (path "/etc/resolv.conf")
+  (path "/private")
+  (path "/private/etc")
+  (path "/private/etc/hosts")
+  (path "/private/etc/resolv.conf")
+  (path "/private/var")
+  (path "/private/var/run")
+  (path "/private/var/run/resolv.conf")
+  (path "/var")
+  (path "/var/run")
+)
+
+; Certificate databases.
+(allow file-read*
+  (path "/Library/Preferences/com.apple.security.plist")
+  (path (from-home "/Library/Preferences/com.apple.security.plist"))
+  ; https://crbug.com/1024000
+  (path (from-home "/Library/Preferences/com.apple.security.revocation.plist"))
+  (subpath "/Library/Keychains")
+  (subpath "/System/Library/Keychains")
+  (subpath "/System/Library/Security")
+  (subpath "/private/var/db/mds")
+  (subpath (from-home "/Library/Keychains"))
+)
+
+(deny network*)
+(allow network* (remote unix-socket))
+
+(allow network-outbound
+  (control-name "com.apple.netsrc")
+  (literal "/private/var/run/mDNSResponder")
+)
+
+;; We can only really filter by port here.
+(allow network* (remote ip "*:80"))
+(allow network* (remote ip "*:443"))

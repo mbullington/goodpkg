@@ -72,7 +72,9 @@ if (
     command &&
     !command.startsWith("-") &&
     !RESTRICTED_YARN_COMMANDS.has(command)) ||
-  (isNPM && command && !RESTRICTED_NPM_COMMANDS.has(command))
+  (isNPM && command && !RESTRICTED_NPM_COMMANDS.has(command)) ||
+  command.indexOf("-g") > -1 ||
+  command.indexOf("--global") > -1
 ) {
   // Just run the command.
   runCommand(argv.join(" "), process.env);
