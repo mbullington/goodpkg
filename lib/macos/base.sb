@@ -11,8 +11,6 @@
 (define (xdg_cache_home) "XDG_CACHE_HOME")
 (define (env_path) PATH)
 
-(define (write_yarnrc) "WRITE_YARNRC")
-
 (define (from-home subpath)
   (string-append (home) subpath))
 (define (from-xdg-config-home subpath)
@@ -53,6 +51,9 @@
     ;; XCode paths for node-gyp and node-pre-gyp.
     (subpath "/Applications/Xcode.app")
     (subpath "/Library")
+
+    ;; Needed for TTY devices.
+    (literal "/dev")
 )
 
 (allow file-read*
@@ -85,71 +86,36 @@
     ;; Working directory.
     (subpath (working_dir))
 
-    ;; Default yarn places.
-    (subpath (from-home "/.yarn"))
-    (subpath (from-xdg-cache-home "/yarn"))
-    (subpath (xdg_config_home))
-
-    (if (true? (write_yarnrc))
-        (subpath (from-home "/.yarnrc"))
-        ;; This is already specified above but apaprently I need to add something.
-        (subpath (working_dir))
-    )
-
-    ;; Default NPM places.
-    (subpath (from-home "/.npm"))
-    
     ;; Temp files.
     (subpath "/private/var/folders/")
 
     ;; node-gyp
     (subpath (from-home "/.node-gyp"))
     (subpath (from-home "/Library/Caches/node-gyp"))
+
+    ;; Cypress
+    (subpath (from-home "/Library/Caches/Cypress"))
 )
 
-;; NETWORK
-;; This part was copied—and lightly modified—from Chromium.
+;; COMMAND LINE
+;; FIXME: Support more than 10 ttys
+
+(allow file*
+    (literal "/dev/ttys000")
+    (literal "/dev/ttys001")
+    (literal "/dev/ttys002")
+    (literal "/dev/ttys003")
+    (literal "/dev/ttys004")
+    (literal "/dev/ttys005")
+    (literal "/dev/ttys006")
+    (literal "/dev/ttys007")
+    (literal "/dev/ttys008")
+    (literal "/dev/ttys009")
+)
+
+;; DENY NETWORK
+;; If network is needed (either requested by application or for installer command),
+;; get_sandbox_file_contents will append network.sb
 
 (deny network*)
 
-; DNS configuration watcher entries. This is a nesty mess of symlinks.
-(allow file-read*
-  (path "/")
-  (path "/etc")
-  (path "/etc/hosts")
-  (path "/etc/resolv.conf")
-  (path "/private")
-  (path "/private/etc")
-  (path "/private/etc/hosts")
-  (path "/private/etc/resolv.conf")
-  (path "/private/var")
-  (path "/private/var/run")
-  (path "/private/var/run/resolv.conf")
-  (path "/var")
-  (path "/var/run")
-)
-
-; Certificate databases.
-(allow file-read*
-  (path "/Library/Preferences/com.apple.security.plist")
-  (path (from-home "/Library/Preferences/com.apple.security.plist"))
-  ; https://crbug.com/1024000
-  (path (from-home "/Library/Preferences/com.apple.security.revocation.plist"))
-  (subpath "/Library/Keychains")
-  (subpath "/System/Library/Keychains")
-  (subpath "/System/Library/Security")
-  (subpath "/private/var/db/mds")
-  (subpath (from-home "/Library/Keychains"))
-)
-
-(deny network*)
-(allow network* (remote unix-socket))
-
-(allow network-outbound
-  (control-name "com.apple.netsrc")
-  (literal "/private/var/run/mDNSResponder")
-)
-
-;; We can only really filter by port here.
-(allow network* (remote ip "*:80"))
-(allow network* (remote ip "*:443"))

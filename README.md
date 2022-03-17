@@ -1,6 +1,14 @@
 # goodpkg
 
-> `goodpkg` is **beta** quality and should be treated as such!
+## **IMPORTANT**
+
+While `goodpkg` is still better than nothing, there are still attack vectors that prevent `goodpkg` from being a comprehensive sandboxing solution.
+
+See [Risks](#risks) before blindly trusting `goodpkg`.
+
+## Description
+
+> `goodpkg` is **alpha** quality and should be treated as such!
 >
 > There's currently some unit tests to ensure sandbox functionality, and
 > I've tried it on complex projects with ESBuild and node-gyp. It still may
@@ -8,11 +16,11 @@
 >
 > If `goodpkg` doesn't work for you, please open an issue on [GitHub](https://github.com/mbullington/goodpkg/issues) or directly contribute!
 
-`goodpkg` is a proof-of-concept CLI to run NPM/Yarn in a macOS sandbox environment, a similar mechanism to the Mac App Store.
+`goodpkg` is a **highly experimental, proof-of-concept** CLI to run NPM/Yarn in a macOS sandbox environment, a similar mechanism to the Mac App Store.
 
 ## How can I use it?
 
-> Once it's beyond beta quality it would be great to publish this directly on NPM.
+> Once it's beyond alpha quality it would be great to publish this directly on NPM.
 
 `yarn global add https://github.com/mbullington/goodpkg.git`
 
@@ -47,6 +55,9 @@ This opens a _huge_ attack vector to either steal personal information or attemp
 - https://portswigger.net/daily-swig/vulnerabilities-in-npm-allowed-threat-actors-to-publish-new-version-of-any-package
 - https://blog.alexwendland.com/2018-11-20-npm-install-scripts-intro/
 - https://blog.expo.dev/ua-parser-js-and-malicious-npm-packages-8c13ee4141a
+- https://snyk.io/blog/peacenotwar-malicious-npm-node-ipc-package-vulnerability/
+
+---
 
 A little known feature of macOS is `sandboxd` (related to [App Sandbox](https://developer.apple.com/documentation/security/app_sandbox)), which is available through the command-line via `sandbox-exec`. This allows us to restrict what a command can read, write, access through the network, and more.
 
@@ -66,13 +77,13 @@ It's also useful to debug blocked resources through searching "sandbox" in `Cons
 
 ## What can goodpkg restrict?
 
-Default configuration (located at `~/.config/goodpkg/config.js`):
+You can create a project-specific file at `goodpkg.config.js`. Right now, the only editable fields are `env` and `network`.
 
 ```typescript
 // Edit this to change how goodpkg runs.
 module.exports = {
   // Environment variables to pass to the sandboxed process.
-  allowEnv: [
+  env: [
     "PWD",
     "PATH",
     "HOME",
@@ -81,24 +92,54 @@ module.exports = {
     "XDG_CACHE_HOME",
     "TERM",
   ],
-  // This is disabled by default to prevent malicious behavior.
-  writeYarnrc: false,
+  // Network is enabled by default, and will always be enabled for
+  // "installer" commands.
+  network: false,
 };
 ```
 
+By default, `goodpkg` restricts:
+
 - Disable extraneous system interfaces.
 - Restrict file reads to:
-  - Home directory (and subdirectories) besides `~/Documents`, `~/Downloads`, etc. unless the Node project is in any of those directories.
+  - Home directory besides `~/Documents`, `~/Downloads`, etc. unless the Node project is in any of those directories.
   - `/usr/local` and subdirectories.
   - XCode Command Line Tools.
-  - Various one-offs found by trial-and-error.
+  - Various one-offs found by trial-and-error (ex: for `node-gyp`).
 - Restrict file writes to:
   - Working directory and subdirectories.
-  - NPM/Yarn caches.
-  - NPM/Yarn config directories.
-  - Temporary files.
   - `/dev/null`, `/dev/urandom`
-- Restrict network to ports `:80`, `:443`
+  - Temporary files.
+
+If `network: true` is enabled (the default), network will be enabled with the following restrictions:
+
+- Limited to ports `:22`, `:80`, and `:443`
+
+If you're inside an install command (such as `yarn add <package>`), **network is always on**. In addition, these directories become writable:
+
+- `.npmrc`, `.yarnrc`
+- NPM/Yarn caches.
+- NPM/Yarn config directories.
+
+## Risks
+
+**READ THIS**
+
+While `goodpkg` is still better than nothing, there are still attack vectors that prevent `goodpkg` from being a comprehensive sandboxing solution.
+
+Ways malicious packages can currently break out of `goodpkg` (non-exaustive):
+- [NPM scripts](https://docs.npmjs.com/cli/v8/using-npm/scripts) can modify the NPM cache, config files, perhaps the Node binary itself.
+  * NPM/Yarn have no knowledge of `goodpkg`, so directories that need write access for installation can't be deescalated for install scripts.
+- Commands have access to `.git`, so currently commit hooks are not sandboxed.
+  * `goodpkg` or package managers would most likely have to absorb features from [husky](https://github.com/typicode/husky) to prevent code injection.
+- Commands in `node_modules/.bin`—not accessed through the `goodpkg` tool—are not sandboxed.
+- Editors such as VSCode load ESLint, Prettier, etc directly and as such, are also not sandboxed.
+
+A long-term goal of `goodpkg` would be for the `goodpkg` tool itself to go away, and create a comprehensive sandboxing solution that:
+
+1. Has a standardized JSON schema.
+2. Has first-class support in NPM, Yarn, and PNPM.
+3. Has first-class support in major VSCode plugins and VSCode itself.
 
 ## License
 

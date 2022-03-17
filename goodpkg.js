@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require("fs");
+const { default: findWorkspaceRoot } = require("find-workspace-root");
 
 const runCommand = require("./lib/run_command");
 
@@ -11,7 +12,7 @@ const getSandboxFileContents = require("./lib/get_sandbox_file_contents");
 const argv = process.argv.slice(2);
 
 // Grepped from 'v1.22.17', hopefully this is exaustive.
-const RESTRICTED_YARN_COMMANDS = new Set([
+const INSTALLER_YARN_COMMANDS = new Set([
   "add",
   "install",
   "remove",
@@ -27,7 +28,7 @@ const RESTRICTED_YARN_COMMANDS = new Set([
 ]);
 
 // Grepped from '6.14.17', hopefully this is exaustive.
-const RESTRICTED_NPM_COMMANDS = new Set([
+const INSTALLER_NPM_COMMANDS = new Set([
   "cache",
   "ci",
   "doctor",
@@ -64,34 +65,25 @@ if (!isYarn && !isNPM) {
   return;
 }
 
-// Make sure the command should be restricted.
-
-const command = argv[1];
-if (
-  (isYarn &&
-    command &&
-    !command.startsWith("-") &&
-    !RESTRICTED_YARN_COMMANDS.has(command)) ||
-  (isNPM && command && !RESTRICTED_NPM_COMMANDS.has(command)) ||
-  command.indexOf("-g") > -1 ||
-  command.indexOf("--global") > -1
-) {
-  // Just run the command.
-  runCommand(argv.join(" "), process.env);
-  return;
-}
-
 console.log("⚠️ ⚠️ ⚠️  It's very important you see this!");
 console.log("⚠️ ⚠️ ⚠️  Otherwise you're not using goodpkg");
 
-setTimeout(() => {
+setTimeout(async () => {
   const sandboxFilePath = getSandboxFilePath();
-  const sandboxFile = getSandboxFileContents(config);
+
+  const cwd = process.cwd();
+  const workingDir = (await findWorkspaceRoot(cwd)) || cwd;
+  const isInstaller = (isYarn && INSTALLER_YARN_COMMANDS.has(argv[0])) || (isNPM && INSTALLER_NPM_COMMANDS.has(argv[0]));
+
+  const sandboxFile = getSandboxFileContents(config, workingDir, isInstaller);
 
   fs.writeFileSync(sandboxFilePath, sandboxFile);
 
   runCommand(
     `sandbox-exec -f ${sandboxFilePath} ${argv.join(" ")}`,
-    pick(process.env, config.allowEnv)
+    {
+      ...pick(process.env, config.env),
+      GOODPKG: "true",
+    }
   );
-}, 2500);
+}, 250);

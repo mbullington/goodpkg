@@ -1,0 +1,45 @@
+;; NETWORK
+;; This part was copied—and lightly modified—from Chromium.
+
+; DNS configuration watcher entries. This is a nesty mess of symlinks.
+(allow file-read*
+  (path "/")
+  (path "/etc")
+  (path "/etc/hosts")
+  (path "/etc/resolv.conf")
+  (path "/private")
+  (path "/private/etc")
+  (path "/private/etc/hosts")
+  (path "/private/etc/resolv.conf")
+  (path "/private/var")
+  (path "/private/var/run")
+  (path "/private/var/run/resolv.conf")
+  (path "/var")
+  (path "/var/run")
+)
+
+; Certificate databases.
+(allow file-read*
+  (path "/Library/Preferences/com.apple.security.plist")
+  (path (from-home "/Library/Preferences/com.apple.security.plist"))
+  ; https://crbug.com/1024000
+  (path (from-home "/Library/Preferences/com.apple.security.revocation.plist"))
+  (subpath "/Library/Keychains")
+  (subpath "/System/Library/Keychains")
+  (subpath "/System/Library/Security")
+  (subpath "/private/var/db/mds")
+  (subpath (from-home "/Library/Keychains"))
+)
+
+(deny network*)
+(allow network* (remote unix-socket))
+
+(allow network-outbound
+  (control-name "com.apple.netsrc")
+  (literal "/private/var/run/mDNSResponder")
+)
+
+;; We can only really filter by port here.
+(allow network* (remote ip "*:22"))
+(allow network* (remote ip "*:80"))
+(allow network* (remote ip "*:443"))

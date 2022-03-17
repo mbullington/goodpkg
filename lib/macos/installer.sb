@@ -1,0 +1,16 @@
+;; FILE WRITE
+
+(deny file-write*)
+(allow file-read* file-write*
+    ;; Default yarn places.
+    (subpath (from-home "/.yarn"))
+    (subpath (from-xdg-config-home "/yarn"))
+    (subpath (from-xdg-cache-home "/yarn"))
+
+    ;; Yarnrc and npmrc.
+    (subpath (from-home "/.yarnrc"))
+    (subpath (from-home "/.npmrc"))
+
+    ;; Default NPM places.
+    (subpath (from-home "/.npm"))
+)
