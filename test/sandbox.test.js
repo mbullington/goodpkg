@@ -8,7 +8,7 @@ describe("sandbox", () => {
 
   test("blocks readdir", () => {
     expect(() => {
-      fs.readdirSync("/var");
+      fs.readdirSync("/var/lib");
     }).toThrow();
 
     expect(() => {

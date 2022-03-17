@@ -1,0 +1,121 @@
+(version 1)
+(import "/System/Library/Sandbox/Profiles/bsd.sb")
+
+;; CONSTANTS
+
+(define (home) "HOME")
+(define (working_dir) "WORKING_DIR")
+(define (homebrew_dir) "HOMEBREW_DIR")
+(define (npm_global_dir) "NPM_GLOBAL_DIR")
+(define (xdg_config_home) "XDG_CONFIG_HOME")
+(define (xdg_cache_home) "XDG_CACHE_HOME")
+(define (env_path) PATH)
+
+(define (from-home subpath)
+  (string-append (home) subpath))
+(define (from-xdg-config-home subpath)
+  (string-append (xdg_config_home) subpath))
+(define (from-xdg-cache-home subpath)
+  (string-append (xdg_cache_home) subpath))
+
+; Helper function to check if a param is set to true.
+(define (true? str) (string=? str "TRUE"))
+
+;; PROCESSES
+
+; Allow sending signals to self - https://crbug.com/20370
+(allow signal (target self))
+
+;; FIXME: tighten this up
+(allow process-fork)
+(allow process-exec)
+(allow lsopen)
+
+;; FILE READ
+;; There's a decent amount of defaults from bsd.sb and system.sb.
+
+(allow file-read*
+    (env_path)
+
+    ;; Homebrew is just too difficult to track and is owned by the user.
+    (subpath (homebrew_dir))
+    ;; Same deal with MacPorts, although I've never used it.
+    (subpath "/opt/local")
+    ;; Global packages from npm.
+    (subpath (npm_global_dir))
+
+    ;; SIP paths.
+    (subpath "/System")
+    (subpath "/usr")
+
+    ;; XCode paths for node-gyp and node-pre-gyp.
+    (subpath "/Applications/Xcode.app")
+    (subpath "/Library")
+
+    ;; Needed for TTY devices.
+    (literal "/dev")
+)
+
+(allow file-read*
+    ;; Some apps try and do this to read the package.json.
+    (literal "/")
+    (literal "/Users")
+    (literal (home))
+)
+
+(deny file-read*
+    (literal "/var")
+    (subpath "/var")
+
+    (subpath "/Library/Caches")
+    (subpath "/Library/Keychains")
+)
+
+(allow file-read*
+    ;; Paths inside the inaccessible paths we'd then... want to access.
+    (subpath (from-home "/Library/Preferences"))
+    (subpath (from-home "/Library/Developer"))
+
+    (subpath (from-home "/.yarnrc"))
+)
+
+;; FILE WRITE
+
+(deny file-write*)
+(allow file-read* file-write*
+    ;; Working directory.
+    (subpath (working_dir))
+
+    ;; Temp files.
+    (subpath "/private/var/folders/")
+
+    ;; node-gyp
+    (subpath (from-home "/.node-gyp"))
+    (subpath (from-home "/Library/Caches/node-gyp"))
+
+    ;; Cypress
+    (subpath (from-home "/Library/Caches/Cypress"))
+)
+
+;; COMMAND LINE
+;; FIXME: Support more than 10 ttys
+
+(allow file*
+    (literal "/dev/ttys000")
+    (literal "/dev/ttys001")
+    (literal "/dev/ttys002")
+    (literal "/dev/ttys003")
+    (literal "/dev/ttys004")
+    (literal "/dev/ttys005")
+    (literal "/dev/ttys006")
+    (literal "/dev/ttys007")
+    (literal "/dev/ttys008")
+    (literal "/dev/ttys009")
+)
+
+;; DENY NETWORK
+;; If network is needed (either requested by application or for installer command),
+;; get_sandbox_file_contents will append network.sb
+
+(deny network*)
+
